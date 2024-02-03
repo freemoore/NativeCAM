@@ -375,8 +375,6 @@
             <property name="can_focus">True</property>
             <property name="tab_pos">left</property>
             <property name="scrollable">True</property>
-            <property name="tab_hborder">6</property>
-            <property name="tab_vborder">3</property>
             <child>
               <object class="GtkAlignment" id="alignment6">
                 <property name="visible">True</property>
@@ -1535,6 +1533,10 @@
                                         <property name="xalign">1</property>
                                         <property name="label">&lt;b&gt;12.345&lt;/b&gt;</property>
                                         <property name="use_markup">True</property>
+                                        <attributes>
+                                           <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+                                           <attribute name="scale" value="1.5"/>
+                                        </attributes>
                                       </object>
                                       <packing>
                                         <property name="right_attach">5</property>
