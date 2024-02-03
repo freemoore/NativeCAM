@@ -90,8 +90,10 @@ try:
 except Exception as _:
     gettext.install(APP_NAME, None, str=True)
 
+
 def _(s):
     return lang.gettext(s)
+
 
 APP_TITLE = _("NativeCAM for LinuxCNC")
 APP_COMMENTS = _("A GUI to help create LinuxCNC NGC files.")
@@ -506,7 +508,8 @@ def copy_dir_recursive(
                         "NO      -> Keep local file\n"
                         "Refresh -> Accept all new system files (don't ask again)\n"
                         "Cancel  -> Keep all local files (don't ask again)\n"
-                     % {"frompath": frompath})
+                        % {"frompath": frompath}
+                    )
                     ans = mess_with_buttons(
                         msg, buttons, title=_("NEW file version available")
                     )
@@ -1454,7 +1457,9 @@ class CellRendererMx(Gtk.CellRendererText):
             )
 
             scrolled_window = Gtk.ScrolledWindow()
-            scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+            scrolled_window.set_policy(
+                Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+            )
             scrolled_window.set_vexpand(True)
 
             scrolled_window.add(self.textedit)
@@ -1506,7 +1511,9 @@ class CellRendererMx(Gtk.CellRendererText):
     def text_edit_keyhandler(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)  # noqa: F841
         if Gdk.keyval_name(event.keyval) in ["Return", "KP_Enter"]:
-            if event.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
+            if event.state & (
+                Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK
+            ):
                 pass
             else:
                 event.keyval = 0
@@ -1748,7 +1755,7 @@ class Feature(object):
     def get_display_string(self):
         return self.get_value()
 
-    def set_value(self, new_val):
+    def set_value(self, new_val, parent=None):
         self.attr["value"] = new_val
 
     def get_type(self):
@@ -1984,8 +1991,8 @@ class Feature(object):
                 msg = _(
                     "Error with subprocess: returncode = %(errcode)s\n"
                     "output = %(output)s\n"
-                    "e= %(e)s\n"
-                 % {"errcode": e.returncode, "output": e.output, "e": e})
+                    "e= %(e)s\n" % {"errcode": e.returncode, "output": e.output, "e": e}
+                )
                 print(msg)
                 mess_dlg(msg)
                 return ""
@@ -2802,9 +2809,9 @@ class NCam(Gtk.VBox):
         for d in fromdirs:
             if os.path.isdir(os.path.join(NCAM_DIR, d)):
                 return
-        msg = _("Create Standalone Directory :\n\n%(dir)s\n\nContinue?" % {
-            "dir": NCAM_DIR
-        })
+        msg = _(
+            "Create Standalone Directory :\n\n%(dir)s\n\nContinue?" % {"dir": NCAM_DIR}
+        )
         if not mess_yesno(msg, title=_("NativeCAM CREATE")):
             sys.exit(0)
 
@@ -4797,7 +4804,9 @@ class NCam(Gtk.VBox):
                     else:
                         return
 
-        if param.set_value(new_value) or value_changed:
+        value_set = param.set_value(new_value, parent)
+
+        if value_set or value_changed:
             self.refresh_views()
             self.action()
         self.focused_widget.grab_focus()
