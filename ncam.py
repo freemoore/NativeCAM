@@ -4079,6 +4079,7 @@ class NCam(Gtk.VBox):
 
         self.feature_pane = self.builder.get_object("ncam_pane")
         self.feature_Hpane = self.builder.get_object("hpaned1")
+        self.feature_Hpane.set_vexpand(True)
         self.params_scroll = self.builder.get_object("params_scroll")
         self.frame2 = self.builder.get_object("frame2")
         self.addVBox = self.builder.get_object("frame3")
@@ -4933,7 +4934,7 @@ class NCam(Gtk.VBox):
 
     def autorefresh_call(self, *arg):
         fname = os.path.join(NGC_DIR, GENERATED_FILE)
-        with open(fname, "wb") as f:
+        with open(fname, "w") as f:
             f.write(self.to_gcode())
 
         try:
