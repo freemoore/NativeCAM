@@ -87,9 +87,11 @@ gettext.textdomain(APP_NAME)
 try:
     lang = gettext.translation(APP_NAME, nativecam_locale, fallback=True)
     lang.install()
-    _ = lang.gettext
 except Exception as _:
     gettext.install(APP_NAME, None, str=True)
+
+def _(s):
+    return lang.gettext(s)
 
 APP_TITLE = _("NativeCAM for LinuxCNC")
 APP_COMMENTS = _("A GUI to help create LinuxCNC NGC files.")
