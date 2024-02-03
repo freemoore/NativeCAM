@@ -329,10 +329,10 @@ def search_path(warn, f, *argsl):
         return src
 
     if warn > search_warning.none:
-        print(_("Can not find file %(filename)s") % {"filename": f})
+        print(_("Can not find file %(filename)s" % {"filename": f}))
 
     if warn == search_warning.dialog:
-        mess_dlg(_("Can not find file %(filename)s") % {"filename": f})
+        mess_dlg(_("Can not find file %(filename)s" % {"filename": f}))
     return None
 
 
@@ -506,7 +506,7 @@ def copy_dir_recursive(
                         "NO      -> Keep local file\n"
                         "Refresh -> Accept all new system files (don't ask again)\n"
                         "Cancel  -> Keep all local files (don't ask again)\n"
-                    ) % {"frompath": frompath}
+                     % {"frompath": frompath})
                     ans = mess_with_buttons(
                         msg, buttons, title=_("NEW file version available")
                     )
@@ -546,7 +546,7 @@ if platform.system() != "Windows":
     try:
         import linuxcnc
     except ImportError as detail:
-        print(_("Import error: %(err_details)s") % {"err_details": detail})
+        print(_("Import error: %(err_details)s" % {"err_details": detail}))
 
 
 def require_ini_items(fname, ini_instance):
@@ -622,7 +622,7 @@ def require_ncam_lib(fname, ini_instance):
             )
 
     except Exception as detail:
-        err_exit(_("Required NativeCAM lib\n%(err_details)s") % {"err_details": detail})
+        err_exit(_("Required NativeCAM lib\n%(err_details)s" % {"err_details": detail}))
 
 
 def get_short_id():
@@ -748,15 +748,15 @@ class VKB(object):
         self.dlg.set_border_width(3)
         self.dlg.set_property("skip-taskbar-hint", True)
 
-        lbl = Gtk.Label("")
+        lbl = Gtk.Label(label="")
         lbl.set_line_wrap(True)
         self.dlg.vbox.pack_start(lbl, False, False, 0)
         lbl.set_markup(tooltip)
 
-        self.entry = Gtk.Label("")
+        self.entry = Gtk.Label(label="")
         self.entry.modify_font(Pango.FontDescription("sans 14"))
         self.entry.set_alignment(1.0, 0.5)
-        self.entry.set_property("ellipsize", Pango.ELLIPSIZE_START)
+        self.entry.set_property("ellipsize", Pango.EllipsizeMode.START)
 
         self.min_value = min_value
         self.max_value = max_value
@@ -764,33 +764,34 @@ class VKB(object):
         self.convertible_units = convertible
 
         box = Gtk.EventBox()
-        box.modify_bg(Gtk.STATE_NORMAL, Gtk.Gdk.Color("#FFFFFF"))
+        bg = Gdk.Color.parse("#FFFFFF")
+        box.modify_bg(Gtk.StateType.NORMAL, bg[1])
 
         box.add(self.entry)
         frame = Gtk.Frame()
         frame.add(box)
 
-        tbl = Gtk.Table(rows=6, columns=5, homogeneous=True)
+        tbl = Gtk.Table(n_rows=6, n_columns=5, homogeneous=True)
         tbl.attach(
             frame,
             0,
             5,
             0,
             1,
-            xoptions=Gtk.EXPAND | Gtk.FILL,
-            yoptions=Gtk.EXPAND | Gtk.FILL,
+            xoptions=Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
         )
 
         self.dlg.vbox.pack_start(tbl, False, False, 0)
 
-        btn = Gtk.Button(_("BS"))
+        btn = Gtk.Button(label=_("BS"))
         btn.connect("clicked", self.input, "BS")
         btn.set_can_focus(False)
         tbl.attach(btn, 4, 5, 2, 3)
 
         i = 0
         for lbl in ["F2", "Pi", "()", "=", "C"]:
-            btn = Gtk.Button(lbl)
+            btn = Gtk.Button(label=lbl)
             btn.connect("clicked", self.input, lbl)
             btn.set_can_focus(False)
             tbl.attach(btn, i, i + 1, 1, 2)
@@ -798,7 +799,7 @@ class VKB(object):
 
         i = 2
         for lbl in ["/", "*", "-", "+"]:
-            btn = Gtk.Button(lbl)
+            btn = Gtk.Button(label=lbl)
             btn.connect("clicked", self.input, lbl)
             btn.set_can_focus(False)
             tbl.attach(btn, 3, 4, i, i + 1)
@@ -809,13 +810,13 @@ class VKB(object):
             k = k - 3
             for j in range(0, 3):
                 lbl = str(k + j)
-                btn = Gtk.Button(lbl)
+                btn = Gtk.Button(label=lbl)
                 btn.connect("clicked", self.input, lbl)
                 btn.set_can_focus(False)
                 tbl.attach(btn, j, j + 1, i, i + 1)
 
         if self.min_value < 0.0:
-            btn = Gtk.Button("+/-")
+            btn = Gtk.Button(label="+/-")
             btn.connect("clicked", self.input, "+/-")
             btn.set_can_focus(False)
             tbl.attach(btn, 2, 3, 5, 6)
@@ -824,20 +825,20 @@ class VKB(object):
             last_col = 3
 
         if self.data_type == "float":  # and get_int(self.digits) > 0 :
-            btn = Gtk.Button(decimal_point)
+            btn = Gtk.Button(label=decimal_point)
             btn.connect("clicked", self.input, decimal_point)
             btn.set_can_focus(False)
             tbl.attach(btn, last_col - 1, last_col, 5, 6)
             last_col = last_col - 1
 
-        btn = Gtk.Button("0")
+        btn = Gtk.Button(label="0")
         btn.connect("clicked", self.input, "0")
         btn.set_can_focus(False)
         tbl.attach(btn, 0, last_col, 5, 6)
 
         btn = Gtk.Button()
         img = Gtk.Image()
-        img.set_from_stock("Gtk.cancel", menu_icon_size)
+        img.set_from_icon_name("gtk-cancel", menu_icon_size)
         btn.set_image(img)
         btn.connect("clicked", self.cancel)
         btn.set_can_focus(False)
@@ -854,7 +855,7 @@ class VKB(object):
 
         self.OKbtn = Gtk.Button()
         img = Gtk.Image()
-        img.set_from_stock("Gtk.ok", menu_icon_size)
+        img.set_from_icon_name("gtk-ok", menu_icon_size)
         self.OKbtn.set_image(img)
         self.OKbtn.connect("clicked", self.ok)
         self.OKbtn.set_can_focus(False)
@@ -1034,7 +1035,7 @@ class VKB(object):
                 self.entry.set_markup("<b>%s%s</b>" % (lbl, data))
 
     def key_press_event(self, win, event):
-        if event.type == Gdk.KEY_PRESS:
+        if event.type == Gdk.EventType.KEY_PRESS:
             k_name = Gdk.keyval_name(event.keyval)
             #            print(k_name)
             if (k_name >= "KP_0" and k_name <= "KP_9") or (
@@ -1195,8 +1196,8 @@ class CellRendererMx(Gtk.CellRendererText):
             self.editdata_type,
             self.convertible_units,
         ) as vkb:
-            tree_x, tree_y = self.tv.get_bin_window().get_origin()
-            tree_w, tree_h = self.tv.window.get_geometry()[2:4]
+            _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
+            tree_w, tree_h = self.tv.get_bin_window().get_geometry()[2:4]
 
             vkb.dlg.set_size_request(vkb_width, vkb_height)
             vkb.dlg.resize(vkb_width, vkb_height)
@@ -1231,10 +1232,11 @@ class CellRendererMx(Gtk.CellRendererText):
         self.list_window.set_transient_for(None)
         self.list_window.set_property("skip-taskbar-hint", True)
         vp = Gtk.Viewport()
-        vp.set_shadow_type(Gtk.SHADOW_ETCHED_IN)
+        vp.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
         self.list_window.vbox.add(vp)
         sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.POLICY_NEVER, Gtk.POLICY_AUTOMATIC)
+        sw.set_vexpand(True)
+        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         vp.add(sw)
 
         self.list_window.realize()
@@ -1258,7 +1260,7 @@ class CellRendererMx(Gtk.CellRendererText):
         rdr = Gtk.CellRendererText()
         row_height = self.cell_area.height - 4
         rdr.set_fixed_size(self.cell_area.width, row_height)
-        tvcolumn.pack_start(rdr, True, False, 0)
+        tvcolumn.pack_start(rdr, True)
         tvcolumn.add_attribute(rdr, "text", 0)
         tvcolumn.set_min_width(self.cell_area.width - 2)
         self.list_window.connect("focus-out-event", self.list_out)
@@ -1267,8 +1269,8 @@ class CellRendererMx(Gtk.CellRendererText):
         sw.add(ls_view)
 
         lw_height = base_height + 4 + self.cell_area.height * min(count, 10)
-        (tree_x, tree_y) = self.tv.get_bin_window().get_origin()
-        (tree_w, tree_h) = self.tv.get_bin_window().get_geometry()[2:4]
+        _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
+        tree_w, tree_h = self.tv.get_bin_window().get_geometry()[2:4]
         y = tree_y + min(self.cell_area.y, tree_h - lw_height)
 
         self.list_window.move(tree_x + self.cell_area.x - 5, y - 2)
@@ -1306,7 +1308,7 @@ class CellRendererMx(Gtk.CellRendererText):
         self.stringedit_entry.connect("key-press-event", self.string_edit_keyhandler)
 
         # position the popup on the edited cell
-        (tree_x, tree_y) = self.tv.get_bin_window().get_origin()
+        _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
         (tree_w, tree_h) = self.tv.window.get_geometry()[2:4]
         x = tree_x + self.cell_area.x
         y = tree_y + self.cell_area.y
@@ -1443,7 +1445,7 @@ class CellRendererMx(Gtk.CellRendererText):
             self.textedit = Gtk.TextView()
             self.textedit.set_editable(True)
             self.textbuffer = self.textedit.get_buffer()
-            self.textedit.set_wrap_mode(Gtk.WRAP_WORD)
+            self.textedit.set_wrap_mode(Pango.WrapMode.WORD)
             self.textbuffer.set_property("text", self.get_property("text"))
 
             self.textedit_window.connect("key-press-event", self.text_edit_keyhandler)
@@ -1452,17 +1454,17 @@ class CellRendererMx(Gtk.CellRendererText):
             )
 
             scrolled_window = Gtk.ScrolledWindow()
-            scrolled_window.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
+            scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+            scrolled_window.set_vexpand(True)
 
             scrolled_window.add(self.textedit)
             self.textedit_window.vbox.add(scrolled_window)
             self.textedit_window.realize()
 
             # position the popup on the edited cell within the treeview
-            (tree_x, a) = treeview.window.get_origin()
-            (a, tree_y) = treeview.get_bin_window().get_origin()
-            (tree_w, tree_h) = treeview.window.get_geometry()[2:4]
-            (t_w, t_h) = self.textedit_window.window.get_geometry()[2:4]
+            _, tree_x, tree_y = treeview.get_bin_window().get_origin()
+            tree_w, tree_h = treeview.get_bin_window().get_geometry()[2:4]
+            t_w, t_h = self.textedit_window.get_size()
             y = tree_y + min(cell_area.y, tree_h - t_h + treeview.get_visible_rect().y)
 
             self.textedit_window.move(tree_x, y + cell_area.height)
@@ -1472,7 +1474,7 @@ class CellRendererMx(Gtk.CellRendererText):
             response = self.textedit_window.run()
             if response == Gtk.ResponseType.OK:
                 (iter_first, iter_last) = self.textbuffer.get_bounds()
-                text = self.textbuffer.get_text(iter_first, iter_last)
+                text = self.textbuffer.get_text(iter_first, iter_last, False)
                 self.edited(self, path, text)
             self.textedit_window.hide()
             self.textedit_window.destroy()
@@ -1504,7 +1506,7 @@ class CellRendererMx(Gtk.CellRendererText):
     def text_edit_keyhandler(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)  # noqa: F841
         if Gdk.keyval_name(event.keyval) in ["Return", "KP_Enter"]:
-            if event.state & (Gdk.EventMask.SHIFT_MASK | Gdk.EventMask.CONTROL_MASK):
+            if event.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK):
                 pass
             else:
                 event.keyval = 0
@@ -1798,7 +1800,7 @@ class Feature(object):
 
         ftype = self.attr["type"]
         if ftype is None:
-            raise Exception(_("Type not defined for\n%s") % src)
+            raise Exception(_("Type not defined for\n%s" % src))
 
         # get order
         if "order" not in self.attr:
@@ -1983,7 +1985,7 @@ class Feature(object):
                     "Error with subprocess: returncode = %(errcode)s\n"
                     "output = %(output)s\n"
                     "e= %(e)s\n"
-                ) % {"errcode": e.returncode, "output": e.output, "e": e}
+                 % {"errcode": e.returncode, "output": e.output, "e": e})
                 print(msg)
                 mess_dlg(msg)
                 return ""
@@ -2701,7 +2703,7 @@ class NCam(Gtk.VBox):
         catname = self.catalog_dir + "/menu-custom.xml"
         cat_dir_name = search_path(search_warning.none, catname, CATALOGS_DIR)
         if cat_dir_name is not None:
-            print(_("Using %s\n") % (catname))
+            print(_("Using %s\n" % (catname)))
         else:
             catname = self.catalog_dir + "/menu.xml"
             cat_dir_name = search_path(search_warning.dialog, catname, CATALOGS_DIR)
@@ -2800,9 +2802,9 @@ class NCam(Gtk.VBox):
         for d in fromdirs:
             if os.path.isdir(os.path.join(NCAM_DIR, d)):
                 return
-        msg = _("Create Standalone Directory :\n\n%(dir)s\n\nContinue?") % {
+        msg = _("Create Standalone Directory :\n\n%(dir)s\n\nContinue?" % {
             "dir": NCAM_DIR
-        }
+        })
         if not mess_yesno(msg, title=_("NativeCAM CREATE")):
             sys.exit(0)
 
@@ -4130,7 +4132,7 @@ class NCam(Gtk.VBox):
 
                 self.items_path = model.get_path(itr)
                 n_children = model.iter_n_children(itr)
-                self.items_lpath = self.items_path + (n_children,)
+                self.items_lpath = self.items_path.append_index(n_children)
 
             elif self.selected_type in ["header", "sub-header"]:
                 self.iter_selected_type = tv_select.header
@@ -4739,9 +4741,12 @@ class NCam(Gtk.VBox):
 
         # find parent to pass as arg to param.set_value
         parent_itr = self.treestore.iter_parent(itr)
-        while self.treestore.get(parent_itr, 0)[0].__class__ is not Feature:
-            parent_itr = self.treestore.iter_parent(parent_itr)
-        parent = self.treestore.get_value(parent_itr, 0)
+        if parent_itr is not None:
+            while self.treestore.get(parent_itr, 0)[0].__class__ is not Feature:
+                parent_itr = self.treestore.iter_parent(parent_itr)
+            parent = self.treestore.get_value(parent_itr, 0)
+        else:
+            parent = None
 
         value_changed = False
 
@@ -4773,7 +4778,7 @@ class NCam(Gtk.VBox):
                     renderer.set_tooltip(param_e.get_tooltip())
                     dt = param_e.get_type()
                     renderer.set_edit_datatype(dt)
-                    renderer.set_param_value(param_e.get_value(True))
+                    renderer.set_param_value(param_e.get_value())
                     if dt in NUMBER_TYPES:
                         renderer.set_max_value(get_float(param_e.get_max_value()))
                         renderer.set_min_value(get_float(param_e.get_min_value()))
@@ -4792,7 +4797,7 @@ class NCam(Gtk.VBox):
                     else:
                         return
 
-        if param.set_value(new_value, parent) or value_changed:
+        if param.set_value(new_value) or value_changed:
             self.refresh_views()
             self.action()
         self.focused_widget.grab_focus()
@@ -4853,7 +4858,7 @@ class NCam(Gtk.VBox):
         self.newnamedlg.vbox.add(edit_entry)
         self.newnamedlg.set_keep_above(True)
 
-        (tree_x, tree_y) = self.treeview.get_bin_window().get_origin()
+        _, tree_x, tree_y = self.treeview.get_bin_window().get_origin()
         self.newnamedlg.move(tree_x, tree_y + self.click_y)
 
         self.newnamedlg.show_all()
@@ -5216,7 +5221,7 @@ class NCam(Gtk.VBox):
                     icon.set_from_pixbuf(get_pixbuf(li[3], quick_access_icon_size))
                     button = Gtk.ToolButton(icon_widget=icon, label=_(li[0]))
                 else:
-                    print(_("No icon for %s") % li[0])
+                    print(_("No icon for %s" % li[0]))
                     button = Gtk.ToolButton(label=li[0])
                 if li[1] is not None:
                     button.set_tooltip_markup(_(li[1]))
@@ -5273,7 +5278,7 @@ class NCam(Gtk.VBox):
             data_type = "grayed"
         else:
             data_type = param.get_type()
-            cell.set_param_value(param.get_value(True))
+            cell.set_param_value(param.get_value())
             cell.set_tooltip(_(param.get_tooltip()))
 
         cell.set_edit_datatype(data_type)
@@ -5639,7 +5644,7 @@ class NCam(Gtk.VBox):
     def display_proj_name(self):
         h, t = os.path.split(CURRENT_PROJECT)
         t, h = os.path.splitext(t)
-        self.mnu_current_project.set_label(_(' "%s"') % t)
+        self.mnu_current_project.set_label(_(' "%s"' % t))
 
     def action_open_project(self, *arg):
         global CURRENT_PROJECT
@@ -5766,7 +5771,7 @@ def verify_ini(fname, ctlog, in_tab):
         if not os.path.exists(fname + ".bak"):
             with open(fname + ".bak", "w") as b:
                 b.write(txt)
-                print(_("Backup file created : %s.bak") % fname)
+                print(_("Backup file created : %s.bak" % fname))
 
         if (txt.find("--catalog=mill") > 0) or (txt.find("-cmill") > 0):
             ctlog = "mill"
@@ -5925,11 +5930,11 @@ def verify_ini(fname, ctlog, in_tab):
 
             with open(fname, "w") as b:
                 b.write(txt)
-                print(_("Success in modifying inifile :\n  %s") % fname)
+                print(_("Success in modifying inifile :\n  %s" % fname))
 
         except Exception as detail:
             err_exit(
-                _("Error modifying ini file\n%(err_details)s") % {"err_details": detail}
+                _("Error modifying ini file\n%(err_details)s" % {"err_details": detail})
             )
 
 
