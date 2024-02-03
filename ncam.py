@@ -296,7 +296,7 @@ def get_float(s10):
 def get_string(float_val, digits, localized=True):
     fmt = "%" + "0.%sf" % digits
     if localized:
-        return locale.format(fmt, float_val)
+        return locale.format_string(fmt, float_val)
     else:
         return fmt % float_val
 
@@ -358,6 +358,13 @@ def get_pixbuf(icon, size):
             print(err)
             PIXBUF_DICT[icon_id] = None
     return None
+
+
+def reparent(widget, new_parent):
+    old_parent = widget.get_parent()
+    if old_parent is not None:
+        old_parent.remove(widget)
+    new_parent.add(widget)
 
 
 def translate(fstring):
@@ -537,8 +544,7 @@ if platform.system() != "Windows":
     try:
         import linuxcnc
     except ImportError as detail:
-        pass
-        #err_exit(detail)
+        print(_("Import error: %(err_details)s") % {"err_details": detail})
 
 
 def require_ini_items(fname, ini_instance):
@@ -947,7 +953,7 @@ class VKB(object):
             elif self.data_type == "int":
                 self.entry.set_markup("<b>%d</b>" % int(rval))
             else:
-                self.entry.set_markup("<b>%s</b>" % locale.format("%0.6f", rval))
+                self.entry.set_markup("<b>%s</b>" % locale.format_string("%0.6f", rval))
 
         elif data == "F2":
             self.entry.set_markup("<b>%s</b>" % self.save_edit)
@@ -1390,7 +1396,7 @@ class CellRendererMx(Gtk.CellRendererText):
             filechooserdialog = Gtk.FileChooserDialog(
                 _("Open"),
                 None,
-                Gtk.FILE_CHOOSER_ACTION_OPEN,
+                Gtk.FileChooserAction.OPEN,
                 (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
             )
             try:
@@ -1496,7 +1502,7 @@ class CellRendererMx(Gtk.CellRendererText):
     def text_edit_keyhandler(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)  # noqa: F841
         if Gdk.keyval_name(event.keyval) in ["Return", "KP_Enter"]:
-            if event.state & (Gdk.SHIFT_MASK | Gdk.CONTROL_MASK):
+            if event.state & (Gdk.EventMask.SHIFT_MASK | Gdk.EventMask.CONTROL_MASK):
                 pass
             else:
                 event.keyval = 0
@@ -1720,7 +1726,7 @@ class Feature(object):
             self.from_xml(xml)
 
     def __repr__(self):
-        #return etree.tostring(self.to_xml(), pretty_print=True)
+        # return etree.tostring(self.to_xml(), pretty_print=True)
         return str(etree)
 
     def get_grayed(self):
@@ -2190,7 +2196,7 @@ class Preferences(object):
             treeview_icon_size = read_int(config, "icons_size", "treeview", 28)
             add_menu_icon_size = read_int(config, "icons_size", "add_menu", 24)
             menu_icon_size = read_int(config, "icons_size", "menu", 4)
-            toolbar_icon_size = read_int(config, "icons_size", "toolbar", 5)
+            toolbar_icon_size = read_int(config, "icons_size", "toolbar", 6)
             add_dlg_icon_size = read_int(config, "icons_size", "add_dlg", 70)
             quick_access_icon_size = read_int(config, "icons_size", "ncam_toolbar", 30)
             vkb_width = read_int(config, "virtual_kb", "minimum_width", 260)
@@ -2729,7 +2735,8 @@ class NCam(Gtk.VBox):
         self.builder.add_from_string(gf)
 
         self.get_widgets()
-        self.main_box.reparent(self)
+
+        reparent(self.main_box, self)
 
         self.on_scale_change_value(self)
 
@@ -2743,7 +2750,7 @@ class NCam(Gtk.VBox):
         self.create_treeview()
 
         # create actions, uimanager and add menu and toolbars
-        self.action_group = Gtk.ActionGroup("my_actions")
+        self.action_group = Gtk.ActionGroup(name="my_actions")
         self.create_actions()
 
         self.uimanager = Gtk.UIManager()
@@ -3345,7 +3352,7 @@ class NCam(Gtk.VBox):
                     add_to_menu(menu_add, _p)
 
     def create_treeview(self):
-        self.treeview = Gtk.TreeView(self.treestore)
+        self.treeview = Gtk.TreeView(model=self.treestore)
         self.treeview.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
         self.builder.get_object("feat_scrolledwindow").add(self.treeview)
 
@@ -3359,7 +3366,7 @@ class NCam(Gtk.VBox):
         cell = Gtk.CellRendererPixbuf()
         cell.set_fixed_size(treeview_icon_size, treeview_icon_size)
         self.tv1_icon_cell = cell
-        col.pack_start(cell, False),
+        (col.pack_start(cell, False),)
         col.set_cell_data_func(cell, self.get_col_icon)
         col.set_min_width(int(self.col_width_adj.get_value()))
 
@@ -3591,7 +3598,11 @@ class NCam(Gtk.VBox):
 
     def create_actions(self):
         def ca(actionname, stock_id, label, accel, tooltip, callback, *args):
-            act = Gtk.Action(name=actionname, label=label, tooltip=tooltip, stock_id=stock_id)
+            act = Gtk.Action(
+                name=actionname, label=label, tooltip=tooltip, stock_id=stock_id
+            )
+            if label is not None:
+                act.set_icon_name(label)
             if callback is not None:
                 act.connect("activate", callback, args)
             if accel is not None:
@@ -3656,7 +3667,7 @@ class NCam(Gtk.VBox):
         self.actionUndo = ca(
             "Undo",
             _("_Undo"),
-            None,
+            _("edit-undo"),
             "<control>Z",
             _("Undo last operation"),
             self.action_undo,
@@ -3664,7 +3675,7 @@ class NCam(Gtk.VBox):
         self.actionRedo = ca(
             "Redo",
             _("_Redo"),
-            None,
+            _("edit-redo"),
             "<control><shift>Z",
             _("Cancel last Undo"),
             self.action_redo,
@@ -3672,7 +3683,7 @@ class NCam(Gtk.VBox):
         self.actionCut = ca(
             "Cut",
             _("_Cut"),
-            None,
+            _("edit-cut"),
             "<control>X",
             _("Cut selected subroutine to clipboard"),
             self.action_cut,
@@ -3680,7 +3691,7 @@ class NCam(Gtk.VBox):
         self.actionCopy = ca(
             "Copy",
             _("_Copy"),
-            None,
+            _("edit-copy"),
             "<control>C",
             _("Copy selected subroutine to clipboard"),
             self.action_copy,
@@ -3688,7 +3699,7 @@ class NCam(Gtk.VBox):
         self.actionPaste = ca(
             "Paste",
             _("_Paste"),
-            None,
+            _("edit-paste"),
             "<control>V",
             _("Paste from clipboard"),
             self.action_paste,
@@ -3696,7 +3707,7 @@ class NCam(Gtk.VBox):
         self.actionAdd = ca(
             "Add",
             _("_Add"),
-            None,
+            _("list-add"),
             "<control>Insert",
             _("Add a subroutine"),
             self.action_add,
@@ -3704,7 +3715,7 @@ class NCam(Gtk.VBox):
         self.actionDuplicate = ca(
             "Duplicate",
             _("_Copy"),
-            _("Duplicate"),
+            _("edit-copy"),
             "<control>D",
             _("Duplicate selected subroutine"),
             self.action_duplicate,
@@ -3712,7 +3723,7 @@ class NCam(Gtk.VBox):
         self.actionDelete = ca(
             "Delete",
             _("_Remove"),
-            None,
+            _("list-remove"),
             "<control>Delete",
             _("Remove selected subroutine"),
             self.action_delete,
@@ -3720,7 +3731,7 @@ class NCam(Gtk.VBox):
         self.actionAppendItm = ca(
             "AppendItm",
             _("_Indent"),
-            _("Add to Items"),
+            _("format-indent-more"),
             "<control>Right",
             _("Add to Items"),
             self.action_appendItm,
@@ -3728,7 +3739,7 @@ class NCam(Gtk.VBox):
         self.actionRemoveItm = ca(
             "RemoveItm",
             _("_Unindent"),
-            _("Remove from Items"),
+            _("format-indent-less"),
             "<control>Left",
             _("Remove from Items"),
             self.action_removeItem,
@@ -3736,7 +3747,7 @@ class NCam(Gtk.VBox):
         self.actionMoveUp = ca(
             "MoveUp",
             _("_Go_up"),
-            _("Move up"),
+            _("go-up"),
             "<control>Up",
             _("Move up"),
             self.move,
@@ -3745,7 +3756,7 @@ class NCam(Gtk.VBox):
         self.actionMoveDown = ca(
             "MoveDown",
             _("_Go_down"),
-            _("Move down"),
+            _("go-down"),
             "<control>Down",
             _("Move down"),
             self.move,
@@ -3754,7 +3765,7 @@ class NCam(Gtk.VBox):
         self.actionSaveUser = ca(
             "SaveUser",
             _("_Save"),
-            _("Save Values as Defaults"),
+            _("document-save"),
             "",
             _("Save Values of this Subroutine as Defaults"),
             self.action_saveUser,
@@ -3834,16 +3845,19 @@ class NCam(Gtk.VBox):
         )
 
         self.actionHideCol = Gtk.ToggleAction(
-            "HideCol", _("Master Value Column Hidden"), _("In master treeview"), None
+            name="HideCol",
+            label=_("Master Value Column Hidden"),
+            tooltip=_("In master treeview"),
+            stock_id=None,
         )
         self.actionHideCol.connect("toggled", self.set_layout)
         self.action_group.add_action(self.actionHideCol)
 
         self.actionSubHdrs = Gtk.ToggleAction(
-            "SubHdrs",
-            _("Sub-Groups In Master Tree"),
-            _("Sub-Groups In Master Tree"),
-            None,
+            name="SubHdrs",
+            label=_("Sub-Groups In Master Tree"),
+            tooltip=_("Sub-Groups In Master Tree"),
+            stock_id=None,
         )
         self.actionSubHdrs.connect("toggled", self.set_layout)
         self.action_group.add_action(self.actionSubHdrs)
@@ -3870,7 +3884,10 @@ class NCam(Gtk.VBox):
         )
 
         self.actionAutoRefresh = Gtk.ToggleAction(
-            "AutoRefresh", _("Auto-refresh"), _("Auto-refresh LinuxCNC"), None
+            name="AutoRefresh",
+            label=_("Auto-refresh"),
+            tooltip=_("Auto-refresh LinuxCNC"),
+            stock_id=None,
         )
         self.actionAutoRefresh.set_active(False)
         self.action_group.add_action(self.actionAutoRefresh)
@@ -3940,9 +3957,7 @@ class NCam(Gtk.VBox):
         self.actionForum = ca(
             "CNCForum", None, _("LinuxCNC Forum"), None, None, self.action_lcncForum
         )
-        self.actionAbout = ca(
-            "About", _("_About"), None, None, None, self.action_about
-        )
+        self.actionAbout = ca("About", _("_About"), None, None, None, self.action_about)
 
         # actions related to toolbars and popup
         self.actionHideField = ca(
@@ -3972,7 +3987,7 @@ class NCam(Gtk.VBox):
         self.actionBuild = ca(
             "Build",
             _("_Execute"),
-            _("Generate %(filename)s") % {"filename": GENERATED_FILE},
+            _("document-save"),
             None,
             _("Generate %(filename)s and load it in LinuxCNC")
             % {"filename": GENERATED_FILE},
@@ -4079,7 +4094,7 @@ class NCam(Gtk.VBox):
 
         self.feature_pane = self.builder.get_object("ncam_pane")
         self.feature_Hpane = self.builder.get_object("hpaned1")
-        self.feature_Hpane.set_vexpand(True)
+        # self.feature_Hpane.set_vexpand(True)
         self.params_scroll = self.builder.get_object("params_scroll")
         self.frame2 = self.builder.get_object("frame2")
         self.addVBox = self.builder.get_object("frame3")
@@ -4306,12 +4321,12 @@ class NCam(Gtk.VBox):
         else:
             path = None
 
-        if event.state & Gdk.SHIFT_MASK:
-            if event.state & Gdk.CONTROL_MASK:
+        if event.state & Gdk.ModifierType.SHIFT_MASK:
+            if event.state & Gdk.ModifierType.CONTROL_MASK:
                 if keyname in ["z", "Z"]:
                     self.actionRedo.activate()
 
-        elif event.state & Gdk.CONTROL_MASK:
+        elif event.state & Gdk.ModifierType.CONTROL_MASK:
             if keyname in ["z", "Z"]:
                 self.actionUndo.activate()
 
@@ -4691,7 +4706,7 @@ class NCam(Gtk.VBox):
         filechooserdialog = Gtk.FileChooserDialog(
             _("Save as ngc..."),
             None,
-            Gtk.FILE_CHOOSER_ACTION_SAVE,
+            Gtk.FileChooserAction.SAVE,
             (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
         )
         try:
@@ -5158,9 +5173,9 @@ class NCam(Gtk.VBox):
                 self.create_second_treeview()
                 self.treeview2.show_all()
             if self.actionSideSide.get_active():
-                self.frame2.reparent(self.feature_Hpane)
+                reparent(self.frame2, self.feature_Hpane)
             else:
-                self.frame2.reparent(self.feature_pane)
+                reparent(self.frame2, self.feature_pane)
         else:
             if self.treeview2 is not None:
                 self.treeview2.destroy()
@@ -5199,6 +5214,7 @@ class NCam(Gtk.VBox):
                     icon.set_from_pixbuf(get_pixbuf(li[3], quick_access_icon_size))
                     button = Gtk.ToolButton(icon_widget=icon, label=_(li[0]))
                 else:
+                    print(_("No icon for %s") % li[0])
                     button = Gtk.ToolButton(label=li[0])
                 if li[1] is not None:
                     button.set_tooltip_markup(_(li[1]))
@@ -5474,7 +5490,7 @@ class NCam(Gtk.VBox):
         filechooserdialog = Gtk.FileChooserDialog(
             _("Import project"),
             None,
-            Gtk.FILE_CHOOSER_ACTION_OPEN,
+            Gtk.FileChooserAction.OPEN,
             (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
         )
         try:
@@ -5589,7 +5605,7 @@ class NCam(Gtk.VBox):
         filechooserdialog = Gtk.FileChooserDialog(
             _("Save project as..."),
             None,
-            Gtk.FILE_CHOOSER_ACTION_SAVE,
+            Gtk.FileChooserAction.SAVE,
             (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
         )
         try:
@@ -5640,7 +5656,7 @@ class NCam(Gtk.VBox):
         filechooserdialog = Gtk.FileChooserDialog(
             dlg_title,
             None,
-            Gtk.FILE_CHOOSER_ACTION_OPEN,
+            Gtk.FileChooserAction.OPEN,
             (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
         )
         try:
@@ -5678,7 +5694,7 @@ class NCam(Gtk.VBox):
         filechooserdialog = Gtk.FileChooserDialog(
             _("Open a cfg file"),
             None,
-            Gtk.FILE_CHOOSER_ACTION_OPEN,
+            Gtk.FileChooserAction.OPEN,
             (_("_Cancel"), Gtk.ResponseType.CANCEL, _("_Ok"), Gtk.ResponseType.OK),
         )
         try:
@@ -5978,7 +5994,7 @@ if __name__ == "__main__":
         in_tab = ("-t" in optlist) or ("--tab" in optlist)
         verify_ini(os.path.abspath(ini), catalog, in_tab)
 
-    window = Gtk.Dialog(APP_TITLE, None, Gtk.DialogFlags.MODAL)
+    window = Gtk.Dialog(APP_TITLE, None, modal=True)
     ncam = NCam()
     window.vbox.add(ncam)
     ncam.actionCurrent.set_visible(True)
