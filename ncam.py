@@ -5778,7 +5778,7 @@ def verify_ini(fname, ctlog, in_tab):
         for line in txt2:
             txt1 += line.lstrip(" \t") + "\n"
 
-        parser = configparser.RawConfigParser()
+        parser = configparser.RawConfigParser(strict=False, allow_no_value=True)
         try:
             parser.read_string(str(txt1))
 
