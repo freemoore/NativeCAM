@@ -6,3 +6,4 @@ debian/nativecam.debhelper.log
 debian/nativecam.substvars
 debian/files
 venv/
+.aider*

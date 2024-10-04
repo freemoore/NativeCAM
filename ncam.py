@@ -4,6 +4,8 @@
 # --  NO USER SETTINGS IN THIS FILE -- EDIT PREFERENCES INSTEAD  ---
 # ------------------------------------------------------------------
 
+# Giovanni Last edit 2024-10-01
+
 import configparser
 import getopt
 import gettext
@@ -58,12 +60,11 @@ NO_ICON_FILE = "no-icon.png"
 # when grayed, uses these format
 gray_header_fmt_str = '<span foreground="gray" style="oblique">%s...</span>'
 gray_sub_header_fmt_str = '<span foreground="gray" style="oblique">%s...</span>'
-gray_sub_header_fmt_str2 = (
-    '<span foreground="gray" style="oblique" weight="bold">%s</span>'
-)
+gray_sub_header_fmt_str2 = ('<span foreground="gray" style="oblique" weight="bold">%s</span>')
 gray_feature_fmt_str = '<span foreground="gray" weight="bold">%s</span>'
 gray_items_fmt_str = '<span foreground="gray" style="oblique" weight="bold">%s</span>'
 gray_val = '<span foreground="gray">%s</span>'
+
 # when NOT grayed
 header_fmt_str = "<i>%s...</i>"
 sub_header_fmt_str = "<i>%s...</i>"
@@ -742,21 +743,24 @@ class Tools(object):
     def get_tool_orient(self):
         return self.orientation
 
-
 class VKB(object):
     def __init__(self, toplevel, tooltip, min_value, max_value, data_type, convertible):
-        self.dlg = Gtk.Dialog(parent=toplevel)
-        self.dlg.set_decorated(False)
-        self.dlg.set_transient_for(None)
+        self.dlg = Gtk.Dialog()
+        #self.dlg.set_decorated(False)
+        self.dlg.set_decorated(True) # Title bar
+        # self.dlg.set_transient_for(win) # win è la finestra che ha aperto il dialog -- VEDERE
         self.dlg.set_border_width(3)
-        self.dlg.set_property("skip-taskbar-hint", True)
+        self.dlg.set_default_size(250, 250)
+        #self.dlg.set_property("skip-taskbar-hint", True)
+        self.dlg.set_keep_above(True) # In primo piano. Qui non funziona. Spostato dopo show_all()
 
-        lbl = Gtk.Label(label="")
+        lbl = Gtk.Label(label="Etichetta lbl")
         lbl.set_line_wrap(True)
         self.dlg.vbox.pack_start(lbl, False, False, 0)
         lbl.set_markup(tooltip)
 
-        self.entry = Gtk.Label(label="")
+        self.entry = Gtk.Label(label="Label Entry") # Display della calcolatrice
+        #self.entry = Gtk.Entry() # Display della calcolatrice
         self.entry.modify_font(Pango.FontDescription("sans 14"))
         self.entry.set_alignment(1.0, 0.5)
         self.entry.set_property("ellipsize", Pango.EllipsizeMode.START)
@@ -767,8 +771,7 @@ class VKB(object):
         self.convertible_units = convertible
 
         box = Gtk.EventBox()
-        bg = Gdk.Color.parse("#FFFFFF")
-        box.modify_bg(Gtk.StateType.NORMAL, bg[1])
+        box.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(1.0, 1.0, 1.0, 1.0))
 
         box.add(self.entry)
         frame = Gtk.Frame()
@@ -782,10 +785,10 @@ class VKB(object):
             0,
             1,
             xoptions=Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
-            yoptions=Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL
         )
 
-        self.dlg.vbox.pack_start(tbl, False, False, 0)
+        self.dlg.vbox.pack_start(tbl, False, False, 0) # DEBUG vedere
 
         btn = Gtk.Button(label=_("BS"))
         btn.connect("clicked", self.input, "BS")
@@ -862,6 +865,7 @@ class VKB(object):
         self.OKbtn.set_image(img)
         self.OKbtn.connect("clicked", self.ok)
         self.OKbtn.set_can_focus(False)
+        
         if self.convertible_units:
             tbl.attach(self.OKbtn, 4, 5, 5, 6)
         else:
@@ -869,8 +873,8 @@ class VKB(object):
 
         self.dlg.connect("key-press-event", self.key_press_event)
         self.dlg.connect("focus-out-event", self.focus_out)
-        self.dlg.set_keep_above(True)
-
+        #self.dlg.set_keep_above(True) # DEBUG vedere se serve
+        
     def __enter__(self):
         self.not_allowed_msg = _("Not allowed - F2 edit")
         self.err_msg = _("Error - F2 edit")
@@ -879,15 +883,19 @@ class VKB(object):
     def initvalue(self, value, saved, initialize):
         self.entry.set_markup("<b>%s</b>" % value)
         self.save_edit = saved
-        self.initialize = initialize
-
+        self.initialize = initialize          
+            
     def run(self, not_allowed):
         def show_error(errm):
             self.entry.set_markup("<b>%s</b>" % errm)
             self.initialize = True
 
+        self.dlg.show_all() # Visualizza la calcolatrice
+        self.dlg.set_keep_above(True)
+        
         self.opened_paren = 0
-        while True:
+
+        if True: # DEBUG per non spostare l'indentazione
             self.convert_units = False
             self.OKbtn.grab_focus()
             response = self.dlg.run()
@@ -914,6 +922,7 @@ class VKB(object):
                                 show_error(self.not_allowed_msg)
                                 break
                     if is_good:
+                        print("response ", response)
                         return response, str(val)
                 else:
                     if self.convert_units:
@@ -934,11 +943,14 @@ class VKB(object):
                                 show_error(self.not_allowed_msg)
                                 break
                     if is_good:
+                        # print("debug vkb run OK return: ", type(response), response, type(rval), rval)
                         return response, str(rval)
+                        #return response, rval
             else:
+                print("debug vkb run 2", response)
                 return response, None
 
-    def input(self, btn, data):
+    def input(self, btn, data):       
         if self.initialize:
             lbl = "0"
             self.initialize = False
@@ -1037,7 +1049,7 @@ class VKB(object):
             elif lbl[-1] not in [")", "i"]:
                 self.entry.set_markup("<b>%s%s</b>" % (lbl, data))
 
-    def key_press_event(self, win, event):
+    def key_press_event(self, win, event): # Tasti fisici tastiera
         if event.type == Gdk.EventType.KEY_PRESS:
             k_name = Gdk.keyval_name(event.keyval)
             #            print(k_name)
@@ -1070,6 +1082,7 @@ class VKB(object):
                 self.dlg.response(Gtk.ResponseType.OK)
 
     def ok(self, btn):
+        print("OK premuto") # DEBUG 
         self.convert_units = False
         self.dlg.response(Gtk.ResponseType.OK)
 
@@ -1077,10 +1090,10 @@ class VKB(object):
         self.dlg.response(Gtk.ResponseType.CANCEL)
 
     def focus_out(self, widget, event):
-        if vkb_cancel_on_out:
+        #if vkb_cancel_on_out:
             self.dlg.response(Gtk.ResponseType.CANCEL)
-        else:
-            self.dlg.response(Gtk.ResponseType.OK)
+        #else:
+        #    self.dlg.response(Gtk.ResponseType.OK)
 
     def compute(self, input_string):
         while input_string.count("(") > input_string.count(")"):
@@ -1104,12 +1117,21 @@ class VKB(object):
             return True, eval(qualified)
         except Exception as _:
             return False, 0.0
-
-    def __exit__(self, type, value, traceback):
+        
+    def destroy(self):
+        print("destroy")
         self.dlg.hide()
         self.dlg.destroy()
         self.dlg = None
-
+            
+    def __exit__(self, type, value, traceback):
+        print("debug exit")
+        self.dlg.hide()
+        self.dlg.destroy()
+        #self.dlg = None
+        # vedere se va bene
+        #return isinstance(value, TypeError)
+   
 
 class CellRendererMx(Gtk.CellRendererText):
     def __init__(self, treeview):
@@ -1191,24 +1213,32 @@ class CellRendererMx(Gtk.CellRendererText):
         return Gtk.CellRendererText.do_get_size(self, widget, cell_area)
 
     def edit_number(self, time_out=0.05):
-        with VKB(
-            self.tv.get_toplevel(),
-            self.tooltip,
-            self.min_value,
-            self.max_value,
-            self.editdata_type,
-            self.convertible_units,
-        ) as vkb:
-            _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
-            tree_w, tree_h = self.tv.get_bin_window().get_geometry()[2:4]
 
+        print("debug edit_number")
+
+        with VKB(
+                self.tv.get_toplevel(),
+                self.tooltip,
+                self.min_value,
+                self.max_value,
+                self.editdata_type,
+                self.convertible_units,
+            ) as vkb:
+        
+            # _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
+            tree_x, tree_y = 100, 140
+            # tree_w, tree_h = self.tv.get_bin_window().get_geometry()[2:4]
+            tree_w, tree_h = 250, 250
+            
+            vkb_width, vkb_height = 200, 200
             vkb.dlg.set_size_request(vkb_width, vkb_height)
             vkb.dlg.resize(vkb_width, vkb_height)
 
-            x = tree_w - vkb_width
+            x = tree_w - vkb_width #- 300 # Horizontal position shift
             if x > self.cell_area.x:
                 x = self.cell_area.x
             y = tree_y + self.cell_area.y + self.cell_area.height
+            y = tree_y + 20
             vkb.dlg.move(tree_x + x + 2, y)
 
             initialize = self.inputKey == ""
@@ -1222,11 +1252,22 @@ class CellRendererMx(Gtk.CellRendererText):
 
                 self.inputKey = ""
             else:
-                vkb.initvalue(self.param_value, self.param_value, initialize)
+                vkb.initvalue(self.param_value, self.param_value, initialize)                
 
-            vkb.dlg.show_all()
-            time.sleep(time_out)
-            return vkb.run(self.not_allowed)
+            time.sleep(time_out) # Attesa prima di aprire la calcolatrice
+            not_allowed = None
+            print("debug 2 vkb")
+
+            # Chiama la calcolatrice
+            response, valore_inserito = vkb.run(not_allowed)
+            print("Debug edit_number risultato da vkb.run()", type(response), response, type(valore_inserito), valore_inserito)
+                
+            if response == Gtk.ResponseType.OK:
+                print("The OK button was clicked")
+            elif response == Gtk.ResponseType.CANCEL:
+                print("The Cancel button was clicked")
+            
+            return response, str(valore_inserito)
 
     def edit_list(self, time_out=0.05):
         self.list_window = Gtk.Dialog(parent=self.tv.get_toplevel())
@@ -1256,7 +1297,7 @@ class CellRendererMx(Gtk.CellRendererText):
                 active_row = count
             count += 1
 
-        ls_view = Gtk.TreeView(ls)
+        ls_view = Gtk.TreeView(model=ls)
         ls_view.set_headers_visible(False)
         tvcolumn = Gtk.TreeViewColumn("Column 0")
         ls_view.append_column(tvcolumn)
@@ -1297,31 +1338,31 @@ class CellRendererMx(Gtk.CellRendererText):
         return response, new_val
 
     def edit_string(self, time_out=0.05):
-        self.stringedit_window = Gtk.Dialog(parent=self.tv.get_toplevel())
-        self.stringedit_window.hide()
+        self.stringedit_window = Gtk.Dialog()
+        #self.stringedit_window.hide()
         self.stringedit_window.set_decorated(False)
-        self.stringedit_window.set_transient_for(None)
-        self.stringedit_window.set_border_width(0)
-        self.stringedit_window.set_property("skip-taskbar-hint", True)
+        #self.stringedit_window.set_transient_for(None)
+        #self.stringedit_window.set_border_width(0)
+        ##self.stringedit_window.set_property("skip-taskbar-hint", True)
 
-        self.stringedit_entry = Gtk.Entry()
-        self.stringedit_window.vbox.add(self.stringedit_entry)
+        self.dialogBox = self.stringedit_window.get_content_area()
+
+        self.stringedit_entry = Gtk.Entry() # Text entry
         self.stringedit_entry.set_editable(True)
+        self.dialogBox.pack_end(self.stringedit_entry, False, False, 0)
 
-        self.stringedit_entry.connect("key-press-event", self.string_edit_keyhandler)
-
-        # position the popup on the edited cell
+        # position the popup entry text on the edited cell
         _, tree_x, tree_y = self.tv.get_bin_window().get_origin()
-        (tree_w, tree_h) = self.tv.window.get_geometry()[2:4]
+        tree_w, tree_h = self.tv.get_bin_window().get_geometry()[2:4]
         x = tree_x + self.cell_area.x
         y = tree_y + self.cell_area.y
         self.stringedit_window.move(x - 4, y - 2)
-        self.stringedit_window.resize(
-            tree_w - self.cell_area.x + 4, self.cell_area.height
-        )
+        self.stringedit_window.resize(tree_w - self.cell_area.x + 4, self.cell_area.height)
         self.stringedit_window.show_all()
+        self.stringedit_window.set_keep_above(True)
         self.stringedit_entry.grab_focus()
         self.stringedit_entry.connect("focus-out-event", self.string_edit_focus_out)
+        self.stringedit_entry.connect("key-press-event", self.string_edit_keyhandler)
 
         time.sleep(time_out)
         if self.inputKey != "BS":
@@ -1332,6 +1373,7 @@ class CellRendererMx(Gtk.CellRendererText):
         self.stringedit_window.hide()
         self.stringedit_window.destroy()
         return response, new_val
+    
 
     def list_keypress(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
@@ -1342,11 +1384,9 @@ class CellRendererMx(Gtk.CellRendererText):
         self.list_window.response(Gtk.ResponseType.CANCEL)
 
     def list_btn_released(self, widget, event):
-        self.list_window.response(Gtk.ResponseType.OK)
+        self.list_window.response(Gtk.ResponseType.OK)   
 
-    def do_start_editing(
-        self, event, treeview, path, background_area, cell_area, flags
-    ):
+    def do_start_editing(self, event, treeview, path, background_area, cell_area, flags):
         if not self.get_property("editable"):
             self.inputKey = ""
             return None
@@ -1368,9 +1408,15 @@ class CellRendererMx(Gtk.CellRendererText):
         self.cell_area = cell_area
 
         if self.editdata_type in NUMBER_TYPES:
+            print("Debug do_start_editing 1 ")
             response, result = self.edit_number()
+
+            print("Debug response, result", response, result) # DEBUG
             if response == Gtk.ResponseType.OK:
+                print("response == Gtk.ResponseType.OK") # DEBUG
                 self.edited(self, path, result)
+                
+            self.do_start_editing() # DEBUG Anche se genera errore, sembra risolvere il crash (perché?)
             return None
 
         elif self.editdata_type in ["bool", "boolean"]:
@@ -1391,9 +1437,11 @@ class CellRendererMx(Gtk.CellRendererText):
             return None
 
         elif self.editdata_type in ["string", "gcode"]:
+            print("do_start_editing string, gcode") #DEBUG
             response, result = self.edit_string()
             if response == Gtk.ResponseType.OK:
                 self.edited(self, path, result)
+            self.do_start_editing() # DEBUG Anche se genera errore, sembra risolvere il crash (perché?)
             return None
 
         elif self.editdata_type == "filename":
@@ -1452,14 +1500,10 @@ class CellRendererMx(Gtk.CellRendererText):
             self.textbuffer.set_property("text", self.get_property("text"))
 
             self.textedit_window.connect("key-press-event", self.text_edit_keyhandler)
-            self.textedit_window.connect(
-                "focus-out-event", self.text_edit_focus_out, path
-            )
+            self.textedit_window.connect("focus-out-event", self.text_edit_focus_out, path)
 
             scrolled_window = Gtk.ScrolledWindow()
-            scrolled_window.set_policy(
-                Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
-            )
+            scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
             scrolled_window.set_vexpand(True)
 
             scrolled_window.add(self.textedit)
@@ -1467,6 +1511,7 @@ class CellRendererMx(Gtk.CellRendererText):
             self.textedit_window.realize()
 
             # position the popup on the edited cell within the treeview
+            print("position pop-up 1") # DEBUG
             _, tree_x, tree_y = treeview.get_bin_window().get_origin()
             tree_w, tree_h = treeview.get_bin_window().get_geometry()[2:4]
             t_w, t_h = self.textedit_window.get_size()
@@ -1498,10 +1543,12 @@ class CellRendererMx(Gtk.CellRendererText):
             )
 
     def string_edit_focus_out(self, widget, event):
+        #print("string_edit_focus_out") #DEBUG
         self.stringedit_window.response(Gtk.ResponseType.OK)
 
     def string_edit_keyhandler(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
+        #print("keyname", keyname) # DEBUG
         if keyname in ["Return", "KP_Enter"]:
             self.stringedit_window.response(Gtk.ResponseType.OK)
 
@@ -1520,7 +1567,7 @@ class CellRendererMx(Gtk.CellRendererText):
                 self.textedit_window.response(Gtk.ResponseType.OK)
 
 
-GObject.type_register(CellRendererMx)
+# GObject.type_register(CellRendererMx) # DEBUG Serve?
 
 
 class Parameter(object):
@@ -1532,7 +1579,9 @@ class Parameter(object):
             self.from_xml(xml)
 
     def __repr__(self):
-        return etree.tostring(self.to_xml(), pretty_print=True)
+        # Vedere se serve .decode('utf-8')
+        # return etree.tostring(self.to_xml(), pretty_print=True)
+        return etree.tostring(self.to_xml(), pretty_print=True).decode('utf-8')
 
     def __delattr__(self, *args, **kwargs):
         return object.__delattr__(self, *args, **kwargs)
@@ -1737,8 +1786,10 @@ class Feature(object):
             self.from_xml(xml)
 
     def __repr__(self):
+        # Vedere quale riga è giusta come return
         # return etree.tostring(self.to_xml(), pretty_print=True)
-        return str(etree)
+        return etree.tostring(self.to_xml(), pretty_print=True).decode('utf-8')
+        # return str(etree)
 
     def get_grayed(self):
         return (self.attr["grayed"] == "1") if "grayed" in self.attr else False
@@ -2233,54 +2284,36 @@ class Preferences(object):
             default_metric = read_int(config, "general", "default_metric", 1) == 1
 
         self.ngc_show_final_cut = read_sbool(config, "general", "show_final_cut", True)
-        self.ngc_show_bottom_cut = read_sbool(
-            config, "general", "show_bottom_cut", True
-        )
+        self.ngc_show_bottom_cut = read_sbool(config, "general", "show_bottom_cut", True)
         self.ngc_init_str = read_str(config, "ngc", "init_str", self.ngc_init_str)
         self.ngc_post_amble = read_str(config, "ngc", "post_amble", " ")
         self.use_pct = read_boolean(config, "ngc", "use_pct_signs", False)
-        self.ngc_spindle_speedup_time = read_str(
-            config, "ngc", "spindle_acc_time", "0.0"
-        )
+        self.ngc_spindle_speedup_time = read_str(config, "ngc", "spindle_acc_time", "0.0")
         self.spindle_all_time = read_sbool(config, "ngc", "spindle_all_time", True)
 
-        self.ngc_off_rot_coord_system = read_int(
-            config, "ngc", "off_rot_coord_system", 2
-        )
+        self.ngc_off_rot_coord_system = read_int(config, "ngc", "off_rot_coord_system", 2)
         gmoccapy_time_out = read_float(config, "general", "gmoccapy_time_out", 0.15)
 
         self.ngc_probe_func = read_str(config, "probe", "probe_func", "4")
-        self.probe_tool_len_comp = read_sbool(
-            config, "probe", "probe_tool_len_comp", True
-        )
+        self.probe_tool_len_comp = read_sbool(config, "probe", "probe_tool_len_comp", True)
         if default_metric:
             self.ngc_probe_feed = read_str(config, "probe_mm", "probe_feed", "200")
             self.ngc_probe_latch = read_str(config, "probe_mm", "probe_latch", "-1")
-            self.ngc_probe_latch_feed = read_str(
-                config, "probe_mm", "probe_latch_feed", "50"
-            )
-            self.ngc_probe_tip_dia = read_str(
-                config, "probe_mm", "probe_tip_dia", "3.0"
-            )
+            self.ngc_probe_latch_feed = read_str(config, "probe_mm", "probe_latch_feed", "50")
+            self.ngc_probe_tip_dia = read_str(config, "probe_mm", "probe_tip_dia", "3.0")
             self.ngc_probe_safe = read_str(config, "probe_mm", "probe_safe", "5.0")
             self.ngc_probe_height = read_str(config, "probe_mm", "probe_height", "0")
 
-            self.drill_center_depth = read_str(
-                config, "drill_mm", "center_drill_depth", "-3.0"
-            )
+            self.drill_center_depth = read_str(config, "drill_mm", "center_drill_depth", "-3.0")
         else:
             self.ngc_probe_feed = read_str(config, "probe", "probe_feed", "8.0")
             self.ngc_probe_latch = read_str(config, "probe", "probe_latch", "-0.05")
-            self.ngc_probe_latch_feed = read_str(
-                config, "probe", "probe_latch_feed", "2"
-            )
+            self.ngc_probe_latch_feed = read_str(config, "probe", "probe_latch_feed", "2")
             self.ngc_probe_tip_dia = read_str(config, "probe", "probe_tip_dia", "0.125")
             self.ngc_probe_safe = read_str(config, "probe", "probe_safe", "0.2")
             self.ngc_probe_height = read_str(config, "probe", "probe_height", "0")
 
-            self.drill_center_depth = read_str(
-                config, "drill", "center_drill_depth", "-0.125"
-            )
+            self.drill_center_depth = read_str(config, "drill", "center_drill_depth", "-0.125")
 
         self.pocket_mode = read_str(config, "pocket", "mode", "0")
 
@@ -2339,7 +2372,7 @@ class Preferences(object):
         parser.set(ftype, "msgid-%d" % msgid, "exclude")
 
         with open(fname, "wb") as configfile:
-            parser.write(configfile)
+            parser.write(configfile.encode("utf-8"))
 
         self.read_excluded_msgs()
 
@@ -2359,7 +2392,8 @@ class Preferences(object):
                 parser.remove_section(ftype)
 
                 with open(fname, "wb") as configfile:
-                    parser.write(configfile)
+                    # parser.write(configfile)
+                    parser.write(bytes(configfile))
 
                 self.read_excluded_msgs()
 
@@ -3115,7 +3149,7 @@ class NCam(Gtk.VBox):
         self.get_expand()
         xml = etree.Element(XML_TAG)
         self.treestore_to_xml_recursion(self.selected_feature_ts_itr, xml, False)
-        self.clipboard.set_text(etree.tostring(xml), len=-1)
+        self.clipboard.set_text(etree.tostring(xml).decode('utf-8'), len=-1)
         self.actionPaste.set_sensitive(True)
 
     def action_paste(self, *arg):
@@ -3416,6 +3450,7 @@ class NCam(Gtk.VBox):
         parser.read(fname)
 
         section = self.selected_feature.get_type()
+
         if parser.has_section(section):
             parser.remove_section(section)
         parser.add_section(section)
@@ -3431,13 +3466,12 @@ class NCam(Gtk.VBox):
             if "grayed" in p.attr:
                 parser.set(section, s + "--grayed", p.attr["grayed"])
 
-        with open(fname, "wb") as configfile:
+        #with open(fname, "wb+") as configfile:
+        #with open(fname, "wb") as configfile:
+        with open(fname, "w") as configfile:
             parser.write(configfile)
-
         self.pref.read_user_values()
-        self.actionDeleteUser.set_sensitive(
-            self.selected_feature.get_type() in USER_SUBROUTINES
-        )
+        self.actionDeleteUser.set_sensitive(self.selected_feature.get_type() in USER_SUBROUTINES)
 
     def action_deleteUser(self, *arg):
         fname = os.path.join(
@@ -3449,7 +3483,8 @@ class NCam(Gtk.VBox):
         section = self.selected_feature.get_type()
         if parser.has_section(section):
             parser.remove_section(section)
-            with open(fname, "wb") as configfile:
+            #with open(fname, "wb") as configfile:
+            with open(fname, "w") as configfile:
                 parser.write(configfile)
             self.pref.read_user_values()
             self.actionDeleteUser.set_sensitive(
@@ -3472,6 +3507,7 @@ class NCam(Gtk.VBox):
             self.click_x = int(event.x)
             self.click_y = int(event.y)
             path = tv.get_path_at_pos(self.click_x, self.click_y - 1)
+            # Tasto destro del mouse su una riga del treeview
             if path is not None:
                 path = path[0]
                 tv.set_cursor(path)
@@ -3485,9 +3521,9 @@ class NCam(Gtk.VBox):
 
             self.edit_menu_activate()
             if tv == self.treeview:
-                self.pop_up.popup(None, None, None, event.button, event.time, None)
+                self.pop_up.popup(None, None, None, None, event.button, event.time)
             else:
-                self.pop_up2.popup(None, None, None, event.button, event.time, None)
+                self.pop_up2.popup(None, None, None, None, event.button, event.time)
             return True
 
     def action_digits(self, *arg):
@@ -3612,8 +3648,10 @@ class NCam(Gtk.VBox):
             act = Gtk.Action(
                 name=actionname, label=label, tooltip=tooltip, stock_id=stock_id
             )
-            if label is not None:
-                act.set_icon_name(label)
+#            if label is not None:
+#               act.set_icon_name(label)
+            if stock_id is not None:
+               act.set_icon_name(stock_id)
             if callback is not None:
                 act.connect("activate", callback, args)
             if accel is not None:
@@ -3624,171 +3662,63 @@ class NCam(Gtk.VBox):
 
         # actions related to projects_("Create a New Project")("Open A Project")_("Open a Saved Project xml file")_('Save Project')
         # "<control>X"
-        self.actionProject = ca("Project", None, _("_Projects"), None, None, None)
+        self.actionProject = ca(
+            "Project", None, _("_Projects"), None, None, None)
         self.actionNew = ca(
-            "New", _("_New"), None, "<control>N", None, self.action_new_project
-        )
+            "New", None, _("_New"), "<control>N", None, self.action_new_project)
         self.actionOpen = ca(
-            "Open",
-            _("_Open"),
-            None,
-            "<control>O",
-            None,
-            self.action_open_project,
-            0,
-        )
+            "Open", None, _("_Open..."), "<control>O", None, self.action_open_project, 0,)
         self.actionOpenExample = ca(
-            "OpenExample",
-            None,
-            _("Open Example"),
-            "",
-            _("Open Example Project"),
-            self.action_open_project,
-            1,
-        )
+            "OpenExample", None, _("Open Example..."), "", _("Open Example Project"), self.action_open_project, 1, )
         self.actionSave = ca(
-            "Save",
-            _("_Save"),
-            None,
-            "<control>S",
-            _("Save project as xml file"),
-            self.action_save_project,
-        )
+            "Save", None, _("_Save as..."), "<control>S", _("Save project as xml file"), self.action_save_project, )
         self.actionSaveTemplate = ca(
-            "SaveTemplate",
-            None,
-            _("Save as Default Template"),
-            "",
-            _("Save project as default template"),
-            self.action_save_template,
-        )
+            "SaveTemplate", None, _("Save as Default Template"), "", _("Save project as default template"), self.action_save_template, )
         self.actionSaveNGC = ca(
-            "SaveNGC",
-            None,
-            _("Export gcode as RS274NGC"),
-            "",
-            _("Export gcode as RS274NGC"),
-            self.action_save_ngc,
-        )
+            "SaveNGC", None, _("Export gcode as RS274NGC..."), "", _("Export gcode as RS274NGC"), self.action_save_ngc, )
 
         # actions related to editing
         self.actionEditMenu = ca(
             "EditMenu", None, _("_Edit"), None, None, self.edit_menu_activate
-        )
+            )
         self.actionUndo = ca(
-            "Undo",
-            _("_Undo"),
-            _("edit-undo"),
-            "<control>Z",
-            _("Undo last operation"),
-            self.action_undo,
-        )
+            "Undo", _("edit-undo"), _("_Undo"), "<control>Z", _("Undo last operation"), self.action_undo,
+            )
         self.actionRedo = ca(
-            "Redo",
-            _("_Redo"),
-            _("edit-redo"),
-            "<control><shift>Z",
-            _("Cancel last Undo"),
-            self.action_redo,
-        )
+            "Redo", _("edit-redo"), _("_Redo"), "<control><shift>Z", _("Cancel last Undo"), self.action_redo,
+            )
         self.actionCut = ca(
-            "Cut",
-            _("_Cut"),
-            _("edit-cut"),
-            "<control>X",
-            _("Cut selected subroutine to clipboard"),
-            self.action_cut,
-        )
+            "Cut", _("edit-cut"), _("_Cut"), "<control>X", _("Cut selected subroutine to clipboard"), self.action_cut,
+            )
         self.actionCopy = ca(
-            "Copy",
-            _("_Copy"),
-            _("edit-copy"),
-            "<control>C",
-            _("Copy selected subroutine to clipboard"),
-            self.action_copy,
-        )
+            "Copy", _("edit-copy"), _("_Copy"), "<control>C", _("Copy selected subroutine to clipboard"), self.action_copy,
+            )
         self.actionPaste = ca(
-            "Paste",
-            _("_Paste"),
-            _("edit-paste"),
-            "<control>V",
-            _("Paste from clipboard"),
-            self.action_paste,
-        )
+            "Paste", _("edit-paste"), _("_Paste"),  "<control>V", _("Paste from clipboard"), self.action_paste,
+            )
         self.actionAdd = ca(
-            "Add",
-            _("_Add"),
-            _("list-add"),
-            "<control>Insert",
-            _("Add a subroutine"),
-            self.action_add,
-        )
+            "Add", _("list-add"), _("_Add"), "<control>Insert", _("Add a subroutine"), self.action_add,
+            )
         self.actionDuplicate = ca(
-            "Duplicate",
-            _("_Copy"),
-            _("edit-copy"),
-            "<control>D",
-            _("Duplicate selected subroutine"),
-            self.action_duplicate,
-        )
+            "Duplicate", _("edit-copy"), _("_Duplicate"), "<control>D", _("Duplicate selected subroutine"), self.action_duplicate,
+            )
         self.actionDelete = ca(
-            "Delete",
-            _("_Remove"),
-            _("list-remove"),
-            "<control>Delete",
-            _("Remove selected subroutine"),
-            self.action_delete,
-        )
+            "Delete", _("list-remove"), _("_Remove"), "<control>Delete", _("Remove selected subroutine"), self.action_delete,
+            )
         self.actionAppendItm = ca(
-            "AppendItm",
-            _("_Indent"),
-            _("format-indent-more"),
-            "<control>Right",
-            _("Add to Items"),
-            self.action_appendItm,
-        )
+            "AppendItm", _("format-indent-more"), _("_Indent"), "<control>Right", _("Add to Items"), self.action_appendItm, )
         self.actionRemoveItm = ca(
-            "RemoveItm",
-            _("_Unindent"),
-            _("format-indent-less"),
-            "<control>Left",
-            _("Remove from Items"),
-            self.action_removeItem,
-        )
+            "RemoveItm", _("format-indent-less"), _("_Unindent"), "<control>Left", _("Remove from Items"), self.action_removeItem,)
         self.actionMoveUp = ca(
-            "MoveUp",
-            _("_Go_up"),
-            _("go-up"),
-            "<control>Up",
-            _("Move up"),
-            self.move,
-            1,
-        )
+            "MoveUp", _("go-up"), _("_Go up"), "<control>Up", _("Move up"), self.move, 1,)
         self.actionMoveDown = ca(
-            "MoveDown",
-            _("_Go_down"),
-            _("go-down"),
-            "<control>Down",
-            _("Move down"),
-            self.move,
-            -1,
-        )
+            "MoveDown", _("go-down"), _("_Go down"), "<control>Down", _("Move down"), self.move, -1,)
         self.actionSaveUser = ca(
-            "SaveUser",
-            _("_Save"),
-            _("document-save"),
-            "",
-            _("Save Values of this Subroutine as Defaults"),
-            self.action_saveUser,
-        )
+            "SaveUser", _("_Save"), _("Save Values of this Subroutine as Defaults"), "", _("document-save"), self.action_saveUser,)
         self.actionDeleteUser = ca(
-            "DeleteUser",
-            _("_Cancel"),
-            _("Delete Custom Default Values"),
-            None,
-            _("Delete Custom Default Values"),
-            self.action_deleteUser,
-        )
+            "DeleteUser", _("_Cancel"), _("Delete Custom Default Values"), None,
+            _("Delete Custom Default Values"), self.action_deleteUser)
+        
         self.actionSetDigits = ca("SetDigits", None, _("Set Digits"), None, None, None)
         self.actionDigit1 = ca("Digit1", None, "1", None, None, self.action_digits, "1")
         self.actionDigit2 = ca("Digit2", None, "2", None, None, self.action_digits, "2")
@@ -3800,34 +3730,21 @@ class NCam(Gtk.VBox):
         # actions related to adding subroutines
         self.actionAddMenu = ca("AddMenu", None, _("_Add"), None, None, None)
         self.actionLoadCfg = ca(
-            "LoadCfg",
-            _("_Open"),
-            _("Add a Prototype Subroutine"),
-            "",
-            _("Add a Subroutine Definition File"),
-            self.action_loadCfg,
-        )
+            "LoadCfg", _("_Open"), _("Add a Prototype Subroutine..."), "",
+                _("Add a Subroutine Definition File"), self.action_loadCfg,
+            )
         self.actionImportXML = ca(
-            "ImportXML",
-            _("_Revert_to_saved"),
-            _("Import a Project File"),
-            None,
-            _("Import a Project Into the Current One"),
-            self.action_importXML,
-        )
+            "ImportXML", _("_Revert_to_saved"), _("Import a Project File..."), None,
+                _("Import a Project Into the Current One"), self.action_importXML,
+            )
 
         # actions related to view
         self.actionViewMenu = ca(
             "ViewMenu", None, _("_View"), None, None, self.view_menu_activate
         )
         self.actionCollapse = ca(
-            "Collapse",
-            _("_Zoom_out"),
-            _("Collapse All Other Nodes"),
-            "<control>K",
-            _("Collapse All Other Nodes"),
-            self.action_collapse,
-        )
+            "Collapse",  _("_Zoom_out"), _("Collapse All Other Nodes"),
+            "<control>K", _("Collapse All Other Nodes"), self.action_collapse,)
         self.actionSaveLayout = ca(
             "SaveLayout",
             _("_Save"),
@@ -3840,7 +3757,7 @@ class NCam(Gtk.VBox):
         self.action_group.add_radio_actions(
             [
                 ("SingleView", None, _("Single View"), None, None, 1),
-                ("DualView", None, _("Dual Views"), None, None, 2),
+                ("DualView", None, _("Dual View"), None, None, 2),
             ],
             1,
             self.set_layout,
@@ -3886,13 +3803,8 @@ class NCam(Gtk.VBox):
             TOOL_TABLE.load_table,
         )
         self.actionPreferences = ca(
-            "Preferences",
-            _("_Preferences"),
-            _("Edit Preferences"),
-            None,
-            _("Edit Preferences"),
-            self.action_preferences,
-        )
+            "Preferences", _("_Preferences"), _("Edit Preferences..."), None, _("Edit Preferences"), self.action_preferences,
+            )
 
         self.actionAutoRefresh = Gtk.ToggleAction(
             name="AutoRefresh",
@@ -3950,35 +3862,23 @@ class NCam(Gtk.VBox):
         )
 
         # actions related to help
-        self.actionHelpMenu = ca("HelpMenu", None, _("_Help"), None, None, None)
+        self.actionHelpMenu = ca(
+            "HelpMenu", None, _("_Help"), None, None, None)
         self.actionYouTube = ca(
-            "YouTube", None, _("NativeCAM on YouTube"), None, None, self.action_youTube
-        )
+            "YouTube", None, _("NativeCAM on YouTube"), None, None, self.action_youTube)
         self.actionYouTrans = ca(
-            "YouTranslate",
-            None,
-            _("Translating NativeCAM"),
-            None,
-            None,
-            self.action_youTrans,
-        )
+            "YouTranslate", None, _("Translating NativeCAM"), None, None, self.action_youTrans, )
         self.actionCNCHome = ca(
-            "CNCHome", None, _("LinuxCNC web Site"), None, None, self.action_lcncHome
-        )
+            "CNCHome", None, _("LinuxCNC web Site"), None, None, self.action_lcncHome )
         self.actionForum = ca(
-            "CNCForum", None, _("LinuxCNC Forum"), None, None, self.action_lcncForum
-        )
-        self.actionAbout = ca("About", _("_About"), None, None, None, self.action_about)
+            "CNCForum", None, _("LinuxCNC Forum"), None, None, self.action_lcncForum )
+        self.actionAbout = ca(
+            "About", None, _("_About"), None, None, self.action_about)
 
         # actions related to toolbars and popup
         self.actionHideField = ca(
-            "HideField",
-            None,
-            _("Hide Selected Field"),
-            None,
-            _("Hide Selected Field"),
-            self.action_hideField,
-        )
+            "HideField", None, _("Hide Selected Field"), None, _("Hide Selected Field"), self.action_hideField,
+            )
         self.actionShowF = ca(
             "ShowFields",
             None,
@@ -3996,14 +3896,9 @@ class NCam(Gtk.VBox):
             self.action_saveCurrent,
         )
         self.actionBuild = ca(
-            "Build",
-            _("_Execute"),
-            _("document-save"),
-            None,
-            _("Generate %(filename)s and load it in LinuxCNC")
-            % {"filename": GENERATED_FILE},
-            self.action_build,
-        )
+            "Build", _("document-save"), _("_Execute"), None,
+            _("Generate %(filename)s and load it in LinuxCNC") % {"filename": GENERATED_FILE}, self.action_build,
+            )
         self.actionRename = ca(
             "Rename",
             None,
@@ -4052,12 +3947,12 @@ class NCam(Gtk.VBox):
 
         if not parser.has_section("layout"):
             parser.add_section("layout")
-        parser.set("layout", "subheaders_in_master", self.actionSubHdrs.get_active())
-        parser.set("layout", "hide_value_column", self.actionHideCol.get_active())
-        parser.set("layout", "dual_view", self.actionDualView.get_active())
-        parser.set("layout", "side_by_side", self.actionSideSide.get_active())
+        parser.set("layout", "subheaders_in_master", str(self.actionSubHdrs.get_active()))
+        parser.set("layout", "hide_value_column", str(self.actionHideCol.get_active()))
+        parser.set("layout", "dual_view", str(self.actionDualView.get_active()))
+        parser.set("layout", "side_by_side", str(self.actionSideSide.get_active()))
 
-        with open(cfg_file, "wb") as configfile:
+        with open(cfg_file, "w") as configfile:
             parser.write(configfile)
 
     def set_preferences(self):
@@ -4105,7 +4000,7 @@ class NCam(Gtk.VBox):
 
         self.feature_pane = self.builder.get_object("ncam_pane")
         self.feature_Hpane = self.builder.get_object("hpaned1")
-        # self.feature_Hpane.set_vexpand(True)
+        self.feature_Hpane.set_vexpand(True)
         self.params_scroll = self.builder.get_object("params_scroll")
         self.frame2 = self.builder.get_object("frame2")
         self.addVBox = self.builder.get_object("frame3")
@@ -4208,7 +4103,7 @@ class NCam(Gtk.VBox):
                 if path_parent is None:
                     path_previous = (index_s - 1,)
                 else:
-                    path_previous = path_parent[0 : depth - 1] + (index_s - 1,)
+                    path_previous = path_parent[0 : depth - 1] + list((index_s - 1,))
                 self.iter_previous = model.get_iter(path_previous)
             else:
                 self.iter_previous = None
@@ -4225,7 +4120,7 @@ class NCam(Gtk.VBox):
             self.items_lpath = (n_children,)
             tree_path = None
             self.hint_label.set_text("")
-
+            
         if self.actionDualView.get_active():
             if self.iter_selected_type == tv_select.none:
                 if self.treeview2 is None:
@@ -4306,6 +4201,7 @@ class NCam(Gtk.VBox):
         self.import_xml(xml)
 
     def tv_row_activated(self, tv, path, col):
+        #print("row_activated") # DEBUG
         if tv.row_expanded(path):
             tv.collapse_row(path)
         else:
@@ -4409,7 +4305,7 @@ class NCam(Gtk.VBox):
                 return False
 
             elif keyname == "Up":
-                if path != (0,):
+                if path != (0,): # DEBUG vedere errore tuple o path
                     depth = len(path)
                     index_s = path[depth - 1]
                     if index_s > 0:
@@ -4513,19 +4409,24 @@ class NCam(Gtk.VBox):
 
             elif keyname in ["Return", "KP_Enter", "space", "F2"]:
                 widget.set_cursor_on_cell(
-                    path, focus_column=widget.get_column(1), start_editing=True
+                    path, focus_column=widget.get_column(1), focus_cell=None, start_editing=True
                 )
+                #widget.set_cursor_on_cell(
+                #    widget, path, focus_column=widget.get_column(1), start_editing=True
+                #)
 
             elif keyname == "BackSpace":
                 widget.get_column(1).get_cell_renderers()[0].set_Input("BS")
                 widget.set_cursor_on_cell(
-                    path, focus_column=widget.get_column(1), start_editing=True
+                    #path, focus_column=widget.get_column(1), start_editing=True
+                    path, focus_column=widget.get_column(1), focus_cell=None, start_editing=True
                 )
 
             elif keyname[-1] >= "0" and keyname[-1] <= "9":
                 widget.get_column(1).get_cell_renderers()[0].set_Input(keyname[-1])
                 widget.set_cursor_on_cell(
-                    path, focus_column=widget.get_column(1), start_editing=True
+                    #path, focus_column=widget.get_column(1), start_editing=True
+                    path, focus_column=widget.get_column(1), focus_cell=None, start_editing=True
                 )
 
             elif keyname in ["KP_Decimal", "period", "comma", "KP_Separator"]:
@@ -4741,10 +4642,15 @@ class NCam(Gtk.VBox):
             filechooserdialog.destroy()
 
     def edited(self, renderer, path, new_value):
+        # print("debug edited", renderer, path, new_value)
         self.focused_widget = renderer.get_treeview()
         itr = renderer.get_treeview().get_model().get_iter(path)
+        # print("debug edited1 itr", itr)
         itr = renderer.get_treeview().get_model().convert_iter_to_child_iter(itr)
+        # print("debug edited2 itr", itr)
+        
         param = self.treestore.get_value(itr, 0)
+        # print("debug edited", param, new_value)
 
         # find parent to pass as arg to param.set_value
         parent_itr = self.treestore.iter_parent(itr)
@@ -4755,7 +4661,7 @@ class NCam(Gtk.VBox):
         else:
             parent = None
 
-        value_changed = False
+        # value_changed = False # DEBUG Togliere?
 
         if renderer.editdata_type == "combo-user":
             p_name = None
@@ -4806,10 +4712,12 @@ class NCam(Gtk.VBox):
 
         value_set = param.set_value(new_value, parent)
 
-        if value_set or value_changed:
+        #if value_set or value_changed:
+        if value_set:
             self.refresh_views()
             self.action()
-        self.focused_widget.grab_focus()
+        self.focused_widget.grab_focus() #DEBUG crash
+        # print("Grab focus") # DEBUG
 
     def action_delete(self, *arg):
         if self.iter_next is not None:
@@ -4857,7 +4765,7 @@ class NCam(Gtk.VBox):
             buttons=Gtk.ButtonsType.OK_CANCEL,
         )
         old_name = self.selected_feature.get_attr("name")
-        self.newnamedlg.set_markup(_("Enter new name for"))
+        self.newnamedlg.set_markup("Enter new name for")
         self.newnamedlg.format_secondary_markup(old_name)
         self.newnamedlg.set_title("NativeCAM")
         edit_entry = Gtk.Entry()
@@ -5061,7 +4969,7 @@ class NCam(Gtk.VBox):
 
         self.undo_list = self.undo_list[: self.undo_pointer + 1]
         self.undo_list = self.undo_list[max(0, len(self.undo_list) - UNDO_MAX_LEN) :]
-        self.undo_list.append(etree.tostring(xml))
+        self.undo_list.append(etree.tostring(xml).decode('utf-8'))
         self.undo_pointer = len(self.undo_list) - 1
 
         self.update_do_btns(refresh)
@@ -5185,6 +5093,7 @@ class NCam(Gtk.VBox):
 
     def set_layout(self, *arg):
         if self.actionDualView.get_active():
+            print("DEBUG actionDualView.get_active")
             if self.treeview2 is None:
                 self.create_second_treeview()
                 self.treeview2.show_all()
